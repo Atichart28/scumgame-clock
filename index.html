@@ -50,12 +50,12 @@
     <div class="item"><div class="label">เวลา 1 วันในเกม</div><div class="value">6 ชั่วโมง 40 นาทีจริง</div></div>
     <div class="item"><div class="label">อัตราเวลา</div><div class="value">เวลาเกมเดินเร็วกว่า 3.6 เท่า</div></div>
     <div class="item"><div class="label">เวลาเริ่มต้น</div><div class="value" id="startDisplay">07:08 · วันที่ในเกม 1</div></div>
-    <div class="item"><div class="label">สถานะ</div><div class="value">เดินเวลาอัตโนมัติ · แชร์การตั้งค่าได้</div></div>
+    <div class="item"><div class="label">สถานะ</div><div class="value">เวลาอ้างอิงคงที่ · ทุกคนเห็นตรงกัน</div></div>
   </section>
 
   <section class="editor" aria-labelledby="editorTitle">
     <h2 id="editorTitle">ปรับเวลาเกม</h2>
-    <p>กำหนดเวลาเกมที่จะให้เริ่มนับจากตอนนี้ แล้วแชร์ลิงก์ให้คนอื่นเห็นเวลาเดียวกัน</p>
+    <p>ตั้งเวลาและวันที่เริ่มต้นได้ การตั้งค่าจะใช้เวลาอ้างอิงเดียวกันสำหรับทุกคน และแชร์ผ่านลิงก์ได้</p>
     <div class="fields">
       <label for="timeInput">เวลาในเกม
         <input id="timeInput" type="time" step="60" value="07:08" required>
@@ -65,16 +65,18 @@
       </label>
     </div>
     <div class="actions">
-      <button class="primary" id="apply">ตั้งเวลาเริ่มนับตอนนี้</button>
+      <button class="primary" id="apply">บันทึกเวลาและแชร์</button>
       <button id="share">คัดลอกลิงก์แชร์</button>
     </div>
   </section>
-  <p class="note">ค่าเริ่มต้นคือ 07:08 วันที่ 1 · เมื่อกดตั้งเวลา ระบบจะเริ่มนับจากเวลาปัจจุบันของเครื่อง และบันทึกค่าไว้ในลิงก์สำหรับแชร์</p>
+  <p class="note">เวลาเริ่มต้น 07:08 วันที่ 1 อ้างอิงจากเวลา UTC คงที่ 11 พ.ย. 2026 เวลา 13:00 น. (20:00 น. เวลาไทย) การตั้งค่าเวลาใหม่จะใช้อ้างอิงเดียวกัน ไม่ใช้เวลาที่กดปุ่ม</p>
 </main>
 <script>
   const REAL_SECONDS_PER_GAME_DAY = 6 * 60 * 60 + 40 * 60;
   const GAME_SECONDS_PER_DAY = 24 * 60 * 60;
-  const DEFAULT_START_REAL_MS = Date.parse('2026-11-11T13:00:00Z');
+  // Fixed shared real-world reference: 11 Nov 2026 13:00 UTC (20:00 Thailand).
+  // All visitors calculate the game clock from this same timestamp.
+  const FIXED_REFERENCE_UTC_MS = Date.parse('2026-11-11T13:00:00Z');
   const DEFAULT_START_GAME_SECONDS = 7 * 3600 + 8 * 60;
   const pad = n => String(n).padStart(2, '0');
   const params = new URLSearchParams(location.search);
@@ -84,20 +86,18 @@
     return Number.isSafeInteger(number) && number >= minimum ? number : null;
   }
 
-  const queryAt = validInteger(params.get('at'), 0);
   const queryDay = validInteger(params.get('day'), 1);
   const queryTime = params.get('time') || '';
-  const timeMatch = /^(\\d{1,2}):(\\d{2})$/.exec(queryTime);
+  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(queryTime);
   const queryHours = timeMatch ? Number(timeMatch[1]) : NaN;
   const queryMinutes = timeMatch ? Number(timeMatch[2]) : NaN;
   const queryTimeIsValid = Number.isInteger(queryHours) && queryHours >= 0 && queryHours < 24 &&
     Number.isInteger(queryMinutes) && queryMinutes >= 0 && queryMinutes < 60;
 
-  let startRealMs = queryAt ?? DEFAULT_START_REAL_MS;
-  let startGameSeconds = queryDay && queryTimeIsValid
+  // Deliberately ignore any legacy "at" URL parameter so the real-time anchor stays fixed.
+  let configuredStartSeconds = queryDay && queryTimeIsValid
     ? (queryDay - 1) * GAME_SECONDS_PER_DAY + queryHours * 3600 + queryMinutes * 60
     : DEFAULT_START_GAME_SECONDS;
-  let configuredStartSeconds = startGameSeconds;
 
   function showStart() {
     const day = Math.floor(configuredStartSeconds / GAME_SECONDS_PER_DAY) + 1;
@@ -107,7 +107,7 @@
   }
 
   function updateClock() {
-    const elapsedRealSeconds = Math.max(0, (Date.now() - startRealMs) / 1000);
+    const elapsedRealSeconds = Math.max(0, (Date.now() - FIXED_REFERENCE_UTC_MS) / 1000);
     const totalGameSeconds = configuredStartSeconds +
       Math.floor(elapsedRealSeconds * GAME_SECONDS_PER_DAY / REAL_SECONDS_PER_GAME_DAY);
     const gameDay = Math.floor(totalGameSeconds / GAME_SECONDS_PER_DAY) + 1;
@@ -126,7 +126,7 @@
     const time = `${pad(Math.floor(seconds / 3600))}:${pad(Math.floor((seconds % 3600) / 60))}`;
     url.searchParams.set('day', day);
     url.searchParams.set('time', time);
-    url.searchParams.set('at', startRealMs);
+    url.searchParams.delete('at');
     history.replaceState(null, '', url);
   }
 
@@ -144,7 +144,6 @@
       return;
     }
     configuredStartSeconds = (day - 1) * GAME_SECONDS_PER_DAY + hours * 3600 + minutes * 60;
-    startRealMs = Date.now();
     saveSettingsToUrl();
     showStart();
     updateClock();
