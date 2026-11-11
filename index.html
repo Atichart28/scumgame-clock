@@ -38,16 +38,16 @@
   <section class="info">
     <div class="item"><div class="label">เวลา 1 วันในเกม</div><div class="value">6 ชั่วโมง 40 นาทีจริง</div></div>
     <div class="item"><div class="label">อัตราเวลา</div><div class="value">เวลาเกมเดินเร็วกว่า 3.6 เท่า</div></div>
-    <div class="item"><div class="label">เวลาอ้างอิง</div><div class="value">11 พ.ย. 2026 เวลา 00:00 น. (ไทย)</div></div>
+    <div class="item"><div class="label">เวลาอ้างอิง</div><div class="value">11 พ.ย. 2026 เวลา 20:00 น. (ไทย)</div></div>
     <div class="item"><div class="label">สถานะ</div><div class="value">เดินเวลาอัตโนมัติ · ดูพร้อมกันได้</div></div>
   </section>
   <button id="share">คัดลอกลิงก์สำหรับแชร์</button>
-  <p class="note">นาฬิกานี้ไม่มีปุ่มตั้งหรือปรับเวลา ทุกเครื่องคำนวณจากเวลาอ้างอิงเดียวกัน จึงแสดงเวลาเกมตรงกันโดยไม่ต้องซิงก์ผ่านเซิร์ฟเวอร์</p>
+  <p class="note">นาฬิกานี้ไม่มีปุ่มตั้งหรือปรับเวลา ทุกเครื่องคำนวณจากเวลาอ้างอิงเดียวกัน จึงเห็นเวลาเดียวกันเมื่อเปิดลิงก์นี้</p>
 </main>
 <script>
-  // เวลาเริ่มต้นแบบตายตัว: 11 พ.ย. 2026 เวลา 00:00 น. ประเทศไทย
+  // เวลาเริ่มต้นแบบตายตัว: 11 พ.ย. 2026 เวลา 20:00 น. ประเทศไทย
   // ห้ามเปลี่ยนค่านี้หากต้องการให้ผู้ชมทุกคนเห็นเวลาเดียวกัน
-  const START_REAL_UTC_MS = Date.parse('2026-11-10T17:00:00Z');
+  const START_REAL_UTC_MS = Date.parse('2026-11-11T13:00:00Z');
   const REAL_SECONDS_PER_GAME_DAY = 6 * 60 * 60 + 40 * 60; // 24,000 วินาที
   const GAME_SECONDS_PER_DAY = 24 * 60 * 60;
 
