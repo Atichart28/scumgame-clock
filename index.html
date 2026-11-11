@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>นาฬิกาโลกเกม 6 ชั่วโมง 40 นาที</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;
+      color:#eef4ff;background:radial-gradient(circle at top,#243653,#101827 65%);
+      font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{width:min(720px,100%);text-align:center;padding:clamp(24px,6vw,52px);
+      border:1px solid #ffffff20;border-radius:28px;background:#ffffff0b;
+      box-shadow:0 24px 80px #0005}
+    .eyebrow{letter-spacing:.16em;text-transform:uppercase;color:#9db5d7;font-size:.82rem}
+    h1{font-size:clamp(1.4rem,4vw,2.2rem);margin:12px 0 28px}
+    #clock{font-variant-numeric:tabular-nums;font-size:clamp(3.2rem,12vw,6.8rem);
+      line-height:1.1;font-weight:750;letter-spacing:.04em;color:#fff}
+    #day{font-size:1.2rem;color:#9ed7ff;margin:18px 0 28px}
+    .info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;text-align:left}
+    .item{background:#ffffff0d;border:1px solid #ffffff18;border-radius:14px;padding:14px}
+    .label{font-size:.8rem;color:#9db5d7;margin-bottom:5px}
+    .value{font-size:1rem;font-weight:650}
+    .note{color:#aab9ce;font-size:.88rem;line-height:1.6;margin:24px auto 0;max-width:520px}
+    button{margin-top:22px;border:1px solid #ffffff35;background:#ffffff12;color:#fff;
+      padding:11px 18px;border-radius:999px;font:inherit;cursor:pointer}
+    button:hover{background:#ffffff22}
+    @media(max-width:420px){.info{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Shared Game Clock</div>
+  <h1>นาฬิกาเวลาเกม</h1>
+  <div id="clock">00:00:00</div>
+  <div id="day">วันที่ในเกม 1</div>
+  <section class="info">
+    <div class="item"><div class="label">เวลา 1 วันในเกม</div><div class="value">6 ชั่วโมง 40 นาทีจริง</div></div>
+    <div class="item"><div class="label">อัตราเวลา</div><div class="value">เวลาเกมเดินเร็วกว่า 3.6 เท่า</div></div>
+    <div class="item"><div class="label">เวลาอ้างอิง</div><div class="value">11 พ.ย. 2026 เวลา 00:00 น. (ไทย)</div></div>
+    <div class="item"><div class="label">สถานะ</div><div class="value">เดินเวลาอัตโนมัติ · ดูพร้อมกันได้</div></div>
+  </section>
+  <button id="share">คัดลอกลิงก์สำหรับแชร์</button>
+  <p class="note">นาฬิกานี้ไม่มีปุ่มตั้งหรือปรับเวลา ทุกเครื่องคำนวณจากเวลาอ้างอิงเดียวกัน จึงแสดงเวลาเกมตรงกันโดยไม่ต้องซิงก์ผ่านเซิร์ฟเวอร์</p>
+</main>
+<script>
+  // เวลาเริ่มต้นแบบตายตัว: 11 พ.ย. 2026 เวลา 00:00 น. ประเทศไทย
+  // ห้ามเปลี่ยนค่านี้หากต้องการให้ผู้ชมทุกคนเห็นเวลาเดียวกัน
+  const START_REAL_UTC_MS = Date.parse('2026-11-10T17:00:00Z');
+  const REAL_SECONDS_PER_GAME_DAY = 6 * 60 * 60 + 40 * 60; // 24,000 วินาที
+  const GAME_SECONDS_PER_DAY = 24 * 60 * 60;
+
+  const pad = n => String(n).padStart(2, '0');
+
+  function updateClock() {
+    const elapsedRealSeconds = Math.max(0, (Date.now() - START_REAL_UTC_MS) / 1000);
+    const totalGameSeconds = Math.floor(elapsedRealSeconds * GAME_SECONDS_PER_DAY / REAL_SECONDS_PER_GAME_DAY);
+    const gameDay = Math.floor(totalGameSeconds / GAME_SECONDS_PER_DAY) + 1;
+    const secondsToday = totalGameSeconds % GAME_SECONDS_PER_DAY;
+    const hours = Math.floor(secondsToday / 3600);
+    const minutes = Math.floor((secondsToday % 3600) / 60);
+    const seconds = secondsToday % 60;
+
+    document.getElementById('clock').textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    document.getElementById('day').textContent = `วันที่ในเกม ${gameDay}`;
+  }
+
+  updateClock();
+  setInterval(updateClock, 250);
+
+  document.getElementById('share').addEventListener('click', async () => {
+    const button = document.getElementById('share');
+    try {
+      await navigator.clipboard.writeText(location.href);
+      button.textContent = 'คัดลอกลิงก์แล้ว ✓';
+    } catch {
+      prompt('คัดลอกลิงก์นี้เพื่อแชร์', location.href);
+    }
+    setTimeout(() => button.textContent = 'คัดลอกลิงก์สำหรับแชร์', 2200);
+  });
+</script>
+</body>
+</html>
